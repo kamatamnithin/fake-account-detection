@@ -23,7 +23,7 @@ except ImportError:
         MODEL_PATH = 'random_forest_model.pkl'
         DEBUG = True
         HOST = '0.0.0.0'
-        PORT = 5000
+        PORT = int(os.environ.get('PORT', 5000))
         CORS_ORIGINS = ['http://localhost:5173', 'http://localhost:3000']
         RATE_LIMIT_ENABLED = True
         RATE_LIMIT_DEFAULT = '200 per day, 50 per hour'
