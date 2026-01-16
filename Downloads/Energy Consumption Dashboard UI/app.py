@@ -567,4 +567,5 @@ if __name__ == '__main__':
     print("  • Rate limiting protects against API abuse")
     print("=" * 60 + "\n")
     
-    app.run(debug=config.DEBUG, host=config.HOST, port=config.PORT)
+    port = int(os.environ.get('PORT', config.PORT))
+    app.run(debug=config.DEBUG, host=config.HOST, port=port)

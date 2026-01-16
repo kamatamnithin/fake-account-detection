@@ -2,7 +2,7 @@
 builder = "NIXPACKS"
 
 [deploy]
-startCommand = "python app.py"
+startCommand = "gunicorn --bind 0.0.0.0:$PORT app:app"
 healthcheckPath = "/api/health"
 restartPolicyType = "ON_FAILURE"
 healthcheckTimeout = 300
@@ -14,5 +14,4 @@ PYTHON_VERSION = "3.12"
 FLASK_ENV = "production"
 DEBUG = "False"
 HOST = "0.0.0.0"
-PORT = "8080"
 CORS_ORIGINS = "https://smartenergy-dashboard.vercel.app"
