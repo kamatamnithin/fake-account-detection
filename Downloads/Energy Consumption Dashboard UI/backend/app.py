@@ -66,7 +66,6 @@ if config.RATE_LIMIT_ENABLED:
 # Global model variable
 MODEL_PATH = config.MODEL_PATH
 model = None
-feature_columns = None
 
 # Performance tracking
 performance_metrics = {
@@ -86,23 +85,18 @@ predictions_history = []
 
 def load_model():
     """Load the Random Forest model from pickle file"""
-    global model, feature_columns
+    global model
     try:
         with open(MODEL_PATH, 'rb') as f:
             model_data = pickle.load(f)
         
-        # Handle both old format (direct model) and new format (dict with metadata)
+        # Handle both direct model and metadata dict formats
         if isinstance(model_data, dict) and 'model' in model_data:
             model = model_data['model']
-            feature_columns = model_data.get('feature_columns', [])
-            print(f"✅ Model loaded successfully from {MODEL_PATH}")
-            print(f"   Features: {len(feature_columns)}")
+            print(f"✅ Model loaded successfully from {MODEL_PATH} (with metadata)")
         else:
-            # Old format - direct model object
             model = model_data
-            feature_columns = []  # Unknown
-            print(f"✅ Model loaded successfully from {MODEL_PATH} (legacy format)")
-        
+            print(f"✅ Model loaded successfully from {MODEL_PATH}")
         return True
     except FileNotFoundError:
         print(f"❌ Model file not found: {MODEL_PATH}")
@@ -245,6 +239,75 @@ def update_metrics(prediction_value: float, success: bool = True):
 # API ENDPOINTS
 # ============================================================================
 
+def transform_features_for_prediction(features: Dict[str, Any]) -> List[float]:
+    """
+    Transform raw input features into the format expected by the model
+    Since we don't have historical data, we use approximations and defaults
+    """
+    import math
+    
+    # Extract basic features
+    temperature = features.get('temperature', 22.0)
+    humidity = features.get('humidity', 60.0)
+    renewable = features.get('renewable', 0.0)
+    hour = features.get('hour', 12)
+    day_of_week = features.get('day_of_week', 1)
+    month = features.get('month', 6)
+    is_weekend = features.get('is_weekend', 0)
+    is_business_hour = features.get('is_business_hour', 1)
+    
+    # For lag features, use reasonable approximations based on typical consumption patterns
+    # These are simplified estimates since we don't have actual historical data
+    
+    # Base consumption estimate based on time of day and day of week
+    base_consumption = 50.0  # Base consumption in kWh
+    
+    # Time-based multipliers
+    hour_multiplier = 1.0 + 0.3 * math.sin(2 * math.pi * (hour - 6) / 12)  # Peak in afternoon
+    weekend_multiplier = 1.2 if is_weekend else 1.0
+    business_multiplier = 1.1 if is_business_hour else 0.8
+    
+    # Estimate lag features based on patterns
+    consumption_lag_1h = base_consumption * hour_multiplier * weekend_multiplier * business_multiplier
+    consumption_lag_24h = consumption_lag_1h * 0.95  # Slightly less than current
+    consumption_lag_168h = consumption_lag_1h * 0.9   # Weekly pattern
+    
+    # Rolling weather averages (use current values as approximation)
+    temperature_rolling_24h = temperature
+    humidity_rolling_24h = humidity
+    
+    # Cyclical time encodings
+    hour_sin = math.sin(2 * math.pi * hour / 24)
+    hour_cos = math.cos(2 * math.pi * hour / 24)
+    day_sin = math.sin(2 * math.pi * day_of_week / 7)
+    day_cos = math.cos(2 * math.pi * day_of_week / 7)
+    month_sin = math.sin(2 * math.pi * month / 12)
+    month_cos = math.cos(2 * math.pi * month / 12)
+    
+    # Historical pattern averages (simplified estimates)
+    avg_consumption_same_hour = base_consumption * hour_multiplier
+    avg_consumption_same_day = base_consumption * weekend_multiplier
+    
+    # Return features in the exact order expected by the model
+    return [
+        consumption_lag_1h,      # consumption_lag_1h
+        consumption_lag_24h,     # consumption_lag_24h
+        consumption_lag_168h,    # consumption_lag_168h
+        temperature_rolling_24h, # temperature_rolling_24h
+        humidity_rolling_24h,    # humidity_rolling_24h
+        hour_sin,                # hour_sin
+        hour_cos,                # hour_cos
+        day_sin,                 # day_sin
+        day_cos,                 # day_cos
+        month_sin,               # month_sin
+        month_cos,               # month_cos
+        avg_consumption_same_hour, # avg_consumption_same_hour
+        avg_consumption_same_day,  # avg_consumption_same_day
+        is_weekend,              # is_weekend
+        is_business_hour,        # is_business_hour
+        renewable,               # renewable
+    ]
+
 @app.route('/api/health', methods=['GET'])
 def health_check():
     """Health check endpoint with system status"""
@@ -323,22 +386,8 @@ def predict():
             if validation['warnings']:
                 all_warnings.extend(validation['warnings'])
             
-            # Extract features in correct order
-            feature_values = [
-                features.get('temperature', 0),
-                features.get('humidity', 0),
-                features.get('occupancy', 0),
-                features.get('renewable', 0),
-                features.get('hvac_status', 0),
-                features.get('lighting_status', 0),
-                features.get('day_of_week', 0),
-                features.get('is_holiday', 0),
-                features.get('hour', 0),
-                features.get('month', 0),
-                features.get('day_of_month', 0),
-                features.get('is_weekend', 0),
-                features.get('is_business_hour', 0),
-            ]
+            # Transform input features to match model expectations
+            feature_values = transform_features_for_prediction(features)
             
             # Make prediction
             X = np.array([feature_values])

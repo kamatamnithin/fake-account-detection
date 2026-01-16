@@ -12,7 +12,6 @@ from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 import pickle
 from datetime import datetime, timedelta
 import warnings
-import os
 warnings.filterwarnings('ignore')
 
 print("=" * 70)
@@ -120,8 +119,6 @@ def generate_training_data(n_samples=10000):
             'hour': hour,
             'day_of_week': day_of_week,
             'month': month,
-            'day_of_month': ts.day,
-            'is_holiday': 0,  # Simplified - no holidays
             'is_weekend': is_weekend,
             'is_business_hour': is_business_hour,
             'consumption': consumption  # TARGET
@@ -141,7 +138,45 @@ print(f"   ✓ Date range: {df['timestamp'].min()} to {df['timestamp'].max()}")
 print("\n🔧 STEP 2: Creating lag-based features (NO DATA LEAKAGE)...")
 
 def create_lag_features(df):
-    """No lag features needed for this simplified model"""
+    """
+    Create proper time series features with lags
+    Following Manish Nathrani's recommendations
+    """
+    
+    df = df.sort_values('timestamp').copy()
+    
+    # LAG FEATURES - Use historical values, not current!
+    print("   ✓ Creating lag features...")
+    df['consumption_lag_1h'] = df['consumption'].shift(1)  # Previous hour
+    df['consumption_lag_24h'] = df['consumption'].shift(24)  # Same time yesterday
+    df['consumption_lag_168h'] = df['consumption'].shift(168)  # Same time last week
+    
+    # ROLLING FEATURES - Weather averages
+    print("   ✓ Creating rolling weather features...")
+    df['temperature_rolling_24h'] = df['temperature'].rolling(window=24, min_periods=1).mean()
+    df['humidity_rolling_24h'] = df['humidity'].rolling(window=24, min_periods=1).mean()
+    
+    # CYCLICAL TIME ENCODING - Sine/Cosine transformations
+    print("   ✓ Creating cyclical time encodings...")
+    df['hour_sin'] = np.sin(2 * np.pi * df['hour'] / 24)
+    df['hour_cos'] = np.cos(2 * np.pi * df['hour'] / 24)
+    df['day_sin'] = np.sin(2 * np.pi * df['day_of_week'] / 7)
+    df['day_cos'] = np.cos(2 * np.pi * df['day_of_week'] / 7)
+    df['month_sin'] = np.sin(2 * np.pi * df['month'] / 12)
+    df['month_cos'] = np.cos(2 * np.pi * df['month'] / 12)
+    
+    # HISTORICAL PATTERNS
+    print("   ✓ Creating historical pattern features...")
+    df['avg_consumption_same_hour'] = df.groupby('hour')['consumption'].transform(
+        lambda x: x.shift(1).expanding().mean()
+    )
+    df['avg_consumption_same_day'] = df.groupby('day_of_week')['consumption'].transform(
+        lambda x: x.shift(1).expanding().mean()
+    )
+    
+    # Drop rows with NaN (from lagging)
+    df = df.dropna()
+    
     return df
 
 df = create_lag_features(df)
@@ -158,19 +193,33 @@ print("\n📋 STEP 3: Preparing feature set...")
 # Only use LAGGED values and derived features
 
 feature_columns = [
-    'temperature',
-    'humidity', 
-    'occupancy',
-    'renewable',
-    'hvac_status',
-    'lighting_status',
-    'day_of_week',
-    'is_holiday',
-    'hour',
-    'month',
-    'day_of_month',
+    # LAG FEATURES (Historical consumption)
+    'consumption_lag_1h',
+    'consumption_lag_24h', 
+    'consumption_lag_168h',
+    
+    # ROLLING WEATHER AVERAGES (Not current!)
+    'temperature_rolling_24h',
+    'humidity_rolling_24h',
+    
+    # CYCLICAL TIME ENCODINGS
+    'hour_sin',
+    'hour_cos',
+    'day_sin',
+    'day_cos',
+    'month_sin',
+    'month_cos',
+    
+    # HISTORICAL PATTERNS
+    'avg_consumption_same_hour',
+    'avg_consumption_same_day',
+    
+    # CATEGORICAL TIME FEATURES
     'is_weekend',
     'is_business_hour',
+    
+    # Renewable (can use current as it's a prediction input)
+    'renewable',
 ]
 
 X = df[feature_columns]
@@ -345,3 +394,6 @@ print("   3. Re-run this script: python train_model.py")
 print("=" * 70)
 print("\n🎉 Your SmartEnergy platform now has a REAL AI model!")
 print("=" * 70)
+
+# Import os for file size
+import os
