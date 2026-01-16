@@ -4,9 +4,12 @@
  */
 
 // Use environment variable for API URL, fallback to localhost with safe access
-const API_BASE_URL = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_URL) || 'http://localhost:5000/api';
+const API_BASE_URL = 'https://smart-energy-production-e366.up.railway.app/api'; // Temporarily hardcoded for testing
 
 console.log('🔌 Backend API URL:', API_BASE_URL);
+console.log('🔍 import.meta:', typeof import.meta);
+console.log('🔍 import.meta.env:', import.meta?.env);
+console.log('🔍 VITE_API_URL:', import.meta?.env?.VITE_API_URL);
 
 export interface PredictionFeature {
   timestamp: string;
@@ -61,14 +64,19 @@ class PredictionService {
    * Check if the backend API is healthy
    */
   async healthCheck(): Promise<{ status: string; model_loaded: boolean }> {
+    console.log('🏥 Health check called, URL:', `${this.baseUrl}/health`);
     try {
       const response = await fetch(`${this.baseUrl}/health`, {
         method: 'GET',
         signal: AbortSignal.timeout(3000), // 3 second timeout
       });
+      console.log('🏥 Health check response status:', response.status);
       if (!response.ok) throw new Error('Health check failed');
-      return await response.json();
+      const data = await response.json();
+      console.log('🏥 Health check data:', data);
+      return data;
     } catch (error) {
+      console.error('🏥 Health check error:', error);
       // Silently fail - backend not available is expected in some cases
       return { status: 'unhealthy', model_loaded: false };
     }

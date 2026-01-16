@@ -9,7 +9,7 @@
  * 3. That's it! The app auto-detects if backend is available
  */
 
-const API_BASE_URL = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_URL) || 'http://localhost:5000/api';
+const API_BASE_URL = 'https://smart-energy-production-e366.up.railway.app/api';
 
 // Simple flag - app works either way!
 let backendAvailable = false;
