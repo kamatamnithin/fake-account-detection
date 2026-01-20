@@ -10,7 +10,7 @@
  */
 
 // Use environment variable for API URL, fallback to localhost with safe access
-const API_BASE_URL = import.meta.env?.VITE_API_URL || 'https://smart-energy-production-e366.up.railway.app/api';
+const API_BASE_URL = import.meta.env?.VITE_API_URL || 'https://captivating-renewal-production.up.railway.app/api';
 
 // Simple flag - app works either way!
 let backendAvailable = false;
