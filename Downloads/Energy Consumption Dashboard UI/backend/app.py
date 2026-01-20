@@ -527,6 +527,66 @@ def reload_model():
 # STARTUP
 # ============================================================================
 
+@app.route('/api/current', methods=['GET'])
+def get_current_consumption():
+    """
+    Get current energy consumption prediction based on current time and typical features
+    """
+    if model is None:
+        return jsonify({
+            'success': False,
+            'error': 'Model not loaded',
+            'current_consumption': 287.0  # Fallback to mock value
+        }), 503
+    
+    try:
+        # Get current timestamp
+        now = datetime.now()
+        
+        # Generate current features (you can customize these)
+        current_features = {
+            'timestamp': now.isoformat(),
+            'temperature': 24.0,  # Default temperature
+            'humidity': 60.0,     # Default humidity
+            'occupancy': 1500,    # Default occupancy
+            'renewable': 50.0,    # Default renewable energy
+            'hvac_status': 1,     # Assume HVAC on
+            'lighting_status': 1, # Assume lighting on
+            'day_of_week': now.weekday(),
+            'is_holiday': 0,      # Assume not holiday
+            'hour': now.hour,
+            'month': now.month,
+            'day_of_month': now.day,
+            'is_weekend': 1 if now.weekday() >= 5 else 0,
+            'is_business_hour': 1 if 9 <= now.hour <= 17 else 0
+        }
+        
+        # Transform features
+        feature_values = transform_features_for_prediction(current_features)
+        
+        # Make prediction
+        X = np.array([feature_values])
+        prediction = model.predict(X)[0]
+        
+        # Calculate confidence bounds
+        bounds = calculate_confidence_bounds(model, X, prediction)
+        
+        return jsonify({
+            'success': True,
+            'current_consumption': float(prediction),
+            'timestamp': current_features['timestamp'],
+            'features_used': current_features,
+            'bounds': bounds
+        })
+        
+    except Exception as e:
+        print(f"❌ Current consumption error: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'current_consumption': 287.0  # Fallback
+        }), 500
+
 # Try to load model on startup
 model_loaded = load_model()
 

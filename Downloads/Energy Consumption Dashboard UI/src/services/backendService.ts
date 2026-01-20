@@ -9,14 +9,17 @@
  * 3. That's it! The app auto-detects if backend is available
  */
 
-const API_BASE_URL = 'https://smart-energy-production-e366.up.railway.app/api';
+// Use environment variable for API URL, fallback to localhost with safe access
+const API_BASE_URL = import.meta.env?.VITE_API_URL || 'https://smart-energy-production-e366.up.railway.app/api';
 
 // Simple flag - app works either way!
 let backendAvailable = false;
 
 console.log('✨ Backend Service: Frontend works with OR without backend');
 console.log('📍 Backend URL:', API_BASE_URL);
-console.log('💡 To connect backend: cd backend && python app.py');
+console.log('🔍 import.meta:', typeof import.meta);
+console.log('🔍 import.meta.env:', import.meta?.env);
+console.log('🔍 VITE_API_URL:', import.meta?.env?.VITE_API_URL);
 
 export interface PredictionFeatures {
   timestamp: string;

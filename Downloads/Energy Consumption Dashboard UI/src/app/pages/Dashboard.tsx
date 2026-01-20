@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { Zap, TrendingUp, Activity, Leaf, TriangleAlert, LayoutDashboard, BarChart3, Sparkles } from 'lucide-react';
 import { KPICard } from '../components/KPICard';
@@ -12,11 +12,36 @@ import { AdvancedAnalytics } from './AdvancedAnalytics';
 import { useTheme } from '../../contexts/ThemeContext';
 import { usePrediction } from '../../contexts/PredictionContext';
 import { mockData } from '../../data/mockData';
+import { predictionService } from '../../services/predictionService';
 
 export function Dashboard() {
   const { isDarkMode } = useTheme();
-  const { predictionData } = usePrediction();
+  const { predictionData, updatePrediction } = usePrediction();
   const [activeTab, setActiveTab] = useState('overview');
+
+  // Fetch current consumption on mount
+  useEffect(() => {
+    const fetchCurrentConsumption = async () => {
+      try {
+        const result = await predictionService.getCurrentConsumption();
+        if (result.success && result.current_consumption) {
+          updatePrediction({
+            currentPrediction: result.current_consumption,
+            timestamp: new Date(result.timestamp || Date.now()),
+            predictionBounds: result.bounds ? {
+              lower: result.bounds.lower_bound,
+              upper: result.bounds.upper_bound,
+              confidence: result.bounds.confidence
+            } : null
+          });
+        }
+      } catch (error) {
+        console.error('Failed to fetch current consumption:', error);
+      }
+    };
+
+    fetchCurrentConsumption();
+  }, [updatePrediction]);
 
   // Use real prediction data if available, otherwise use mock data
   const currentConsumption = predictionData.currentPrediction || mockData.kpis.currentConsumption;
@@ -107,7 +132,7 @@ export function Dashboard() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
               <KPICard
                 title="Current Consumption"
-                value={currentConsumption}
+                value={currentConsumption.toFixed(2)}
                 unit="kW"
                 trend={-3.2}
                 icon={Zap}
@@ -116,7 +141,7 @@ export function Dashboard() {
               />
               <KPICard
                 title="24-Hour Forecast"
-                value={(forecast24h / 1000).toFixed(1)}
+                value={(forecast24h / 1000).toFixed(2)}
                 unit="MWh"
                 trend={2.8}
                 icon={TrendingUp}

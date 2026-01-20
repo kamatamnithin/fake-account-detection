@@ -4,7 +4,7 @@
  */
 
 // Use environment variable for API URL, fallback to localhost with safe access
-const API_BASE_URL = 'https://smart-energy-production-e366.up.railway.app/api'; // Temporarily hardcoded for testing
+const API_BASE_URL = import.meta.env?.VITE_API_URL || 'https://smart-energy-production-e366.up.railway.app/api';
 
 console.log('🔌 Backend API URL:', API_BASE_URL);
 console.log('🔍 import.meta:', typeof import.meta);
@@ -293,6 +293,33 @@ class PredictionService {
     }
 
     return features;
+  }
+
+  /**
+   * Get current energy consumption prediction
+   */
+  async getCurrentConsumption(): Promise<{
+    success: boolean;
+    current_consumption?: number;
+    timestamp?: string;
+    bounds?: { lower_bound: number; upper_bound: number; confidence: number };
+    error?: string;
+  }> {
+    try {
+      const response = await fetch(`${this.baseUrl}/current`, {
+        signal: AbortSignal.timeout(5000),
+      });
+      if (!response.ok) throw new Error('Failed to get current consumption');
+      return await response.json();
+    } catch (error) {
+      console.error('Current consumption error:', error);
+      // Return fallback value
+      return {
+        success: false,
+        error: 'Backend not available',
+        current_consumption: 287.0
+      };
+    }
   }
 }
 

@@ -8,6 +8,9 @@ __pycache__/
 env/
 venv/
 .venv/
+
+# ML Model (only needed in backend)
+random_forest_model.pkl
 pip-log.txt
 pip-delete-this-directory.txt
 .tox/

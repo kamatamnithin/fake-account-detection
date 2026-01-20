@@ -1,0 +1,26 @@
+# Frontend files - not needed for backend deployment
+src/
+dist/
+node_modules/
+public/
+*.md
+deploy*.*
+*.bat
+*.sh
+.gitignore
+.vercel/
+.vite/
+netlify.toml
+vercel.json
+package*.json
+vite.config.ts
+postcss.config.mjs
+tailwind.config.js
+tsconfig.json
+README.md
+*.txt
+*.html
+guidelines/
+__pycache__/
+*.pyc
+.DS_Store

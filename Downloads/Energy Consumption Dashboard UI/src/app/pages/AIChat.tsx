@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { motion } from 'motion/react';
-import { Send, Bot, User, Sparkles, AlertCircle, RefreshCw, Copy, Trash2, Download, Mic, MicOff, Volume2, VolumeX } from 'lucide-react';
+import { Send, Bot, User, Sparkles, AlertCircle, RefreshCw, Copy, Trash2, Download, Mic, MicOff, Volume2, VolumeX, Square } from 'lucide-react';
 import { geminiService } from '../../services/geminiService';
 import { usePrediction } from '../../contexts/PredictionContext';
 
@@ -594,6 +594,17 @@ export function AIChat() {
               >
                 {voiceEnabled ? <Volume2 className="w-5 h-5" /> : <VolumeX className="w-5 h-5" />}
               </motion.button>
+              {isSpeaking && (
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={stopSpeaking}
+                  className="p-3 rounded-xl bg-red-50 text-red-600 border-2 border-red-200 hover:bg-red-100 transition-all"
+                  title="Stop speaking"
+                >
+                  <Square className="w-5 h-5" />
+                </motion.button>
+              )}
               <div className="flex-1 text-center">
                 <span className="text-xs text-slate-600">
                   {isListening ? '🎤 Listening...' : isSpeaking ? '🔊 Speaking...' : ''}
