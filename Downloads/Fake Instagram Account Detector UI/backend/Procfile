@@ -1,1 +1,1 @@
-web: python wsgi.py
+web: python -u backend_api.py

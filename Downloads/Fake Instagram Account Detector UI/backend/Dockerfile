@@ -18,8 +18,8 @@ COPY . .
 RUN useradd -m appuser && chown -R appuser:appuser /app
 USER appuser
 
-# Expose port
-EXPOSE 8000
+# Expose port (Railway sets PORT env variable)
+EXPOSE 5000
 
 # Run the application
-CMD ["python", "wsgi.py"]
+CMD ["python", "-u", "backend_api.py"]
