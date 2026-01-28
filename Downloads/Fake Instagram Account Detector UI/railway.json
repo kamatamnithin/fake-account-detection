@@ -1,6 +1,4 @@
 {
-  "buildPack": "python",
-  "build": {
-    "builder": "nixpacks"
-  }
+  "buildPack": "dockerfile"
 }
+
