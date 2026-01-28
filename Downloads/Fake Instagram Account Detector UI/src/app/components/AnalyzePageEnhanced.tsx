@@ -56,19 +56,19 @@ export function AnalyzePageEnhanced() {
       const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
       const backendUrl = `${apiBaseUrl}/api/analyze`;
       
-      // Map form data to backend feature names (match OldDataSet.csv columns)
+      // Map form data to backend feature names (match exact pickle file names)
       const payload = {
-        'profile_pic': accountData.has_profile_pic ? 1 : 0,
-        'nums_length_username': (accountData.username.length > 0 ? accountData.username.replace(/\D/g, '').length / accountData.username.length : 0),
-        'fullname_words': (accountData.name.split(/\s+/).filter(w => w.length > 0).length),
-        'bio_length': accountData.bio.length,
-        'external_url': accountData.external_url ? 1 : 0,
-        'private': accountData.is_private ? 1 : 0,
-        'verified': accountData.is_verified ? 1 : 0,
-        'business': 0,
-        'posts': parseInt(accountData.posts) || 0,
-        'followers': parseInt(accountData.followers) || 0,
-        'following': parseInt(accountData.following) || 0,
+        'Profile Pic': accountData.has_profile_pic ? 1 : 0,
+        'Nums/Length Username': (accountData.username.length > 0 ? accountData.username.replace(/\D/g, '').length / accountData.username.length : 0),
+        'Full Name Words': (accountData.name.split(/\s+/).filter(w => w.length > 0).length),
+        'Bio Length': accountData.bio.length,
+        'External Url': accountData.external_url ? 1 : 0,
+        'Private': accountData.is_private ? 1 : 0,
+        'Verified': accountData.is_verified ? 1 : 0,
+        'Business': 0,
+        '#Posts': parseInt(accountData.posts) || 0,
+        '#Followers': parseInt(accountData.followers) || 0,
+        '#Following': parseInt(accountData.following) || 0,
       };
 
       const response = await fetch(backendUrl, {
