@@ -56,6 +56,9 @@ export function AnalyzePageEnhanced() {
       const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
       const backendUrl = `${apiBaseUrl}/api/analyze`;
       
+      console.log('API Base URL:', apiBaseUrl);
+      console.log('Backend URL:', backendUrl);
+      
       // Map form data to backend feature names (match exact pickle file names)
       const payload = {
         'Profile Pic': accountData.has_profile_pic ? 1 : 0,
@@ -70,6 +73,8 @@ export function AnalyzePageEnhanced() {
         '#Followers': parseInt(accountData.followers) || 0,
         '#Following': parseInt(accountData.following) || 0,
       };
+
+      console.log('Sending payload:', payload);
 
       const response = await fetch(backendUrl, {
         method: 'POST',
@@ -103,7 +108,8 @@ export function AnalyzePageEnhanced() {
       setResult(result);
     } catch (error) {
       console.error('Analysis error:', error);
-      setError('Unable to connect to backend ML service. Using client-side analysis...');
+      console.error('Error details:', error instanceof Error ? error.message : String(error));
+      setError(`Backend connection failed: ${error instanceof Error ? error.message : 'Unknown error'}. Using client-side analysis...`);
       // Fallback to client-side analysis
       performClientAnalysis();
     } finally {
