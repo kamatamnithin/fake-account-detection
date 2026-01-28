@@ -193,8 +193,12 @@ def index():
 
 if __name__ == '__main__':
     import os
+    from waitress import serve
+    
     port = int(os.environ.get('PORT', 5000))
     host = '0.0.0.0'
-    print(f"Starting Flask server on port {port}...")
+    
+    print(f"Starting Waitress server on {host}:{port}...")
     print("=" * 60)
-    app.run(host=host, port=port, debug=False)
+    serve(app, host=host, port=port, _quiet=False)
+
