@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 cd backend
-pip install -r requirements.txt
-python backend_ml_service.py
+pip install --no-cache-dir -r requirements.txt
+python -u backend_ml_service.py
