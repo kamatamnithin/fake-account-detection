@@ -1,6 +1,5 @@
 {
   "buildCommand": "npm ci --legacy-peer-deps && npm run build",
   "outputDirectory": "dist",
-  "devCommand": "npm run dev",
-  "nodeVersion": "18.x"
+  "devCommand": "npm run dev"
 }
